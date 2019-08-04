@@ -1,10 +1,40 @@
-module PitchClass exposing (PitchClass, PitchClassSet, noteName, pitchClass, pitchClassList, pitchClassName, pitchClassSet)
+module PitchClass exposing
+    ( PitchClass(..)
+    , PitchClassSet
+    , add
+    , darkColor
+    , hslColor
+    , int
+    , map
+    , noteName
+    , pitchClass
+    , pitchClassList
+    , pitchClassName
+    , pitchClassSet
+    )
 
 import Array exposing (Array)
+import Color exposing (..)
+import HSLColor exposing (HSLColor)
 
 
 type PitchClass
     = PitchClass Int
+
+
+add : PitchClass -> PitchClass -> PitchClass
+add (PitchClass p1) (PitchClass p2) =
+    pitchClass (p1 + p2)
+
+
+int : PitchClass -> Int
+int (PitchClass i) =
+    i
+
+
+map : (Int -> Int) -> PitchClass -> PitchClass
+map f (PitchClass i) =
+    pitchClass (f i)
 
 
 pitchClass : Int -> PitchClass
@@ -25,6 +55,71 @@ pitchClassName (PitchClass i) =
 
     else
         "?"
+
+
+type alias RGB =
+    { r : Float
+    , g : Float
+    , b : Float
+    }
+
+
+reify : RGB -> Color
+reify rgb =
+    Color.rgb rgb.r rgb.g rgb.b
+
+
+darkColor : PitchClass -> HSLColor
+darkColor =
+    HSLColor.modifyLuminance (\x -> x * 0.3) << hslColor
+
+
+hslColor : PitchClass -> HSLColor
+hslColor (PitchClass i) =
+    let
+        f h =
+            HSLColor h 0.6 0.75
+    in
+    f <|
+        case i of
+            0 ->
+                0
+
+            1 ->
+                0.0833
+
+            2 ->
+                0.1667
+
+            3 ->
+                0.25
+
+            4 ->
+                0.3333
+
+            5 ->
+                0.4167
+
+            6 ->
+                0.5
+
+            7 ->
+                0.5833
+
+            8 ->
+                0.6667
+
+            9 ->
+                0.75
+
+            10 ->
+                0.8333
+
+            11 ->
+                0.9167
+
+            _ ->
+                0
 
 
 noteName : PitchClass -> String

@@ -1,21 +1,20 @@
 const {Howl, Howler} = require('howler');
 const {Elm} = require('./Main.elm');
-
 import './styles.css'
 
+// FONTS
 var WebFont = require('webfontloader');
 
- WebFont.load({
-   google: {
-     families: ['Nanum Gothic']
-   }
- });
+WebFont.load({
+ google: {
+   families: ['Nanum Gothic']
+ }
+});
 
+// ELM
 var app = Elm.Main.init({
     node: document.getElementById('elm-app')
   });
-
-console.log(app);
 
 var sound = new Howl({
   src: [require('./assets/0.wav')],
@@ -23,6 +22,7 @@ var sound = new Howl({
   volume: 0.5
 });
 
+// AUDIO
 var sounds = [];
 
 for (var pc = 0; pc <= 11; pc++) {
@@ -30,15 +30,19 @@ for (var pc = 0; pc <= 11; pc++) {
     new Howl({
       src: [require(`./assets/${pc}.wav` )],
       loop: true,
-      volume: 0.5,
+      volume: 0,
     })
   );
-  sounds[pc].mute(true);
   sounds[pc].play();
 }
 
 app.ports.audioControl.subscribe(function(data) {
   var pc = data[0];
   var audible = data[1];
-  if (sounds[pc]) sounds[pc].mute(!audible);
+  console.log(sounds[pc].volume());
+  if (audible && sounds[pc].volume() == 0) {
+    sounds[pc].fade(0, 0.5, 20);
+  } else if (sounds[pc].volume() > 0) {
+    sounds[pc].fade(sounds[pc].volume(), 0, 20);
+  }
 });

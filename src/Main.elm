@@ -2,10 +2,12 @@ port module Main exposing (Msg(..), main, update, view)
 
 import Array exposing (Array)
 import Browser
+import Browser.Events exposing (onKeyPress)
 import Dict exposing (Dict, toList)
 import Html exposing (Html, button, div, text)
 import Html.Events exposing (onClick)
-import PitchClass exposing (PitchClass, pitchClass)
+import Json.Decode as Decode
+import PitchClass exposing (PitchClass(..), pitchClass)
 import PitchClassButton
 import Tuple exposing (first)
 import TypedSvg exposing (svg)
@@ -15,6 +17,54 @@ import TypedSvg.Types exposing (Fill(..), Length, StrokeLinejoin(..), Transform(
 
 
 port audioControl : ( Int, Bool ) -> Cmd msg
+
+
+keyDecoder : Decode.Decoder (Maybe Int)
+keyDecoder =
+    Decode.map toDirection (Decode.field "key" Decode.string)
+
+
+toDirection : String -> Maybe Int
+toDirection string =
+    case string of
+        "q" ->
+            Just 0
+
+        "2" ->
+            Just 1
+
+        "w" ->
+            Just 2
+
+        "3" ->
+            Just 3
+
+        "e" ->
+            Just 4
+
+        "r" ->
+            Just 5
+
+        "5" ->
+            Just 6
+
+        "t" ->
+            Just 7
+
+        "6" ->
+            Just 8
+
+        "y" ->
+            Just 9
+
+        "7" ->
+            Just 10
+
+        "u" ->
+            Just 11
+
+        _ ->
+            Nothing
 
 
 main : Program () Model Msg
@@ -28,7 +78,8 @@ main =
 
 
 type Msg
-    = ButtonMsg Int ButtonAction
+    = ButtonMsg PitchClass ButtonAction
+    | KeyPress (Maybe Int)
 
 
 type ButtonAction
@@ -40,17 +91,13 @@ type ButtonAction
 
 
 type alias Model =
-    { buttons : Array Bool
-    , selectedButtonIdx : Maybe Int
-    , hoveredButtonIdx : Maybe Int
+    { selected : Array Bool
     }
 
 
 startingModel : Model
 startingModel =
-    { buttons = Array.fromList (List.repeat 12 False)
-    , selectedButtonIdx = Nothing
-    , hoveredButtonIdx = Nothing
+    { selected = Array.fromList (List.repeat 12 False)
     }
 
 
@@ -64,13 +111,17 @@ init _ =
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg curModel =
     case msg of
-        ButtonMsg idx action ->
+        ButtonMsg pc action ->
+            let
+                idx =
+                    PitchClass.int pc
+            in
             case action of
                 MouseDown ->
-                    ( { curModel | selectedButtonIdx = Just idx }, Cmd.none )
+                    ( curModel, Cmd.none )
 
                 MouseOver ->
-                    ( { curModel | hoveredButtonIdx = Just idx }, Cmd.none )
+                    ( curModel, Cmd.none )
 
                 MouseUp ->
                     ( curModel, Cmd.none )
@@ -79,10 +130,25 @@ update msg curModel =
                     ( curModel, Cmd.none )
 
                 Click ->
-                    case Array.get idx curModel.buttons of
+                    case Array.get idx curModel.selected of
                         Just btnSelected ->
-                            ( { curModel | buttons = Array.set idx (not btnSelected) curModel.buttons }
+                            ( { curModel | selected = Array.set idx (not btnSelected) curModel.selected }
                             , audioControl ( idx, not btnSelected )
+                            )
+
+                        _ ->
+                            ( curModel, Cmd.none )
+
+        KeyPress key ->
+            case key of
+                Nothing ->
+                    ( curModel, Cmd.none )
+
+                Just pc ->
+                    case Array.get pc curModel.selected of
+                        Just btnSelected ->
+                            ( { curModel | selected = Array.set pc (not btnSelected) curModel.selected }
+                            , audioControl ( pc, not btnSelected )
                             )
 
                         _ ->
@@ -99,15 +165,41 @@ updateAtIndex idx fn array =
             Array.set idx (fn a) array
 
 
-subscriptions : Model -> Sub msg
-subscriptions _ =
-    Sub.none
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ onKeyPress (Decode.map KeyPress keyDecoder)
+        ]
+
+
+tonnetzRow : Model -> PitchClass -> Html Msg
+tonnetzRow model basePC =
+    div [] <|
+        List.map
+            ((\pc ->
+                PitchClassButton.viewCircle
+                    { onClick = ButtonMsg pc Click, pitchClass = pc, selected = model.selected }
+             )
+                << PitchClass.add basePC
+                << pitchClass
+            )
+            [ 0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70 ]
 
 
 view : Model -> Html Msg
 view model =
     div []
-        [ viewPitchClassPie model ]
+        [ div [] [ viewPitchClassPie model ]
+        , div []
+            [ tonnetzRow model (PitchClass 0)
+            , tonnetzRow model (PitchClass 4)
+            , tonnetzRow model (PitchClass 8)
+            , tonnetzRow model (PitchClass 0)
+            , tonnetzRow model (PitchClass 4)
+            , tonnetzRow model (PitchClass 8)
+            , tonnetzRow model (PitchClass 0)
+            ]
+        ]
 
 
 viewPitchClassPie : Model -> Html Msg
@@ -115,20 +207,37 @@ viewPitchClassPie model =
     let
         toSvg : ( Int, Bool ) -> Html Msg
         toSvg ( idx, selected ) =
+            let
+                pc =
+                    pitchClass idx
+            in
             PitchClassButton.view
                 { highlighted = False
                 , selected = selected
                 , rotation = 360 * toFloat idx / 12
-                , onClick = ButtonMsg idx Click
-                , onMouseDown = ButtonMsg idx MouseDown
-                , onMouseOver = ButtonMsg idx MouseOver
-                , onMouseOut = ButtonMsg idx MouseOut
-                , onMouseUp = ButtonMsg idx MouseUp
+                , onClick = ButtonMsg pc Click
+                , onMouseDown = ButtonMsg pc MouseDown
+                , onMouseOver = ButtonMsg pc MouseOver
+                , onMouseOut = ButtonMsg pc MouseOut
+                , onMouseUp = ButtonMsg pc MouseUp
                 , pitchClass = pitchClass idx
                 }
     in
     svg [ width (px 300), height (px 300) ]
-        (List.map toSvg (Array.toIndexedList model.buttons))
+        (List.map toSvg
+            << List.sortBy
+                (\( idx, _ ) ->
+                    idx
+                        + (if Array.get idx model.selected == Just True then
+                            100
+
+                           else
+                            0
+                          )
+                )
+         <|
+            Array.toIndexedList model.selected
+        )
 
 
 

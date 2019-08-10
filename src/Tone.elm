@@ -1,16 +1,13 @@
-module PitchClass exposing
-    ( PitchClass(..)
-    , PitchClassSet
+module Tone exposing
+    ( Tone(..)
     , add
     , darkColor
     , hslColor
     , int
+    , letterName
     , map
-    , noteName
-    , pitchClass
-    , pitchClassList
-    , pitchClassName
-    , pitchClassSet
+    , name
+    , tone
     )
 
 import Array exposing (Array)
@@ -18,32 +15,32 @@ import Color exposing (..)
 import HSLColor exposing (HSLColor)
 
 
-type PitchClass
-    = PitchClass Int
+type Tone
+    = Tone Int
 
 
-add : PitchClass -> PitchClass -> PitchClass
-add (PitchClass p1) (PitchClass p2) =
-    pitchClass (p1 + p2)
+add : Tone -> Tone -> Tone
+add (Tone p1) (Tone p2) =
+    tone (p1 + p2)
 
 
-int : PitchClass -> Int
-int (PitchClass i) =
+int : Tone -> Int
+int (Tone i) =
     i
 
 
-map : (Int -> Int) -> PitchClass -> PitchClass
-map f (PitchClass i) =
-    pitchClass (f i)
+map : (Int -> Int) -> Tone -> Tone
+map f (Tone i) =
+    tone (f i)
 
 
-pitchClass : Int -> PitchClass
-pitchClass i =
-    PitchClass <| modBy 12 i
+tone : Int -> Tone
+tone i =
+    Tone <| modBy 12 i
 
 
-pitchClassName : PitchClass -> String
-pitchClassName (PitchClass i) =
+name : Tone -> String
+name (Tone i) =
     if i < 10 then
         String.fromInt i
 
@@ -69,13 +66,13 @@ reify rgb =
     Color.rgb rgb.r rgb.g rgb.b
 
 
-darkColor : PitchClass -> HSLColor
+darkColor : Tone -> HSLColor
 darkColor =
     HSLColor.modifyLuminance (\x -> x * 0.3) << hslColor
 
 
-hslColor : PitchClass -> HSLColor
-hslColor (PitchClass i) =
+hslColor : Tone -> HSLColor
+hslColor (Tone i) =
     let
         f h =
             HSLColor h 0.6 0.75
@@ -122,8 +119,8 @@ hslColor (PitchClass i) =
                 0
 
 
-noteName : PitchClass -> String
-noteName (PitchClass i) =
+letterName : Tone -> String
+letterName (Tone i) =
     case i of
         0 ->
             "C"
@@ -163,28 +160,3 @@ noteName (PitchClass i) =
 
         _ ->
             "?"
-
-
-type PitchClassSet
-    = PitchClassSet (Array Bool)
-
-
-pitchClassSet : Array Bool -> PitchClassSet
-pitchClassSet arr =
-    PitchClassSet <|
-        if Array.length arr < 12 then
-            Array.append arr (Array.repeat (12 - Array.length arr) False)
-
-        else if Array.length arr > 12 then
-            Array.slice 0 12 arr
-
-        else
-            arr
-
-
-pitchClassList : List Int -> PitchClassSet
-pitchClassList pcs =
-    PitchClassSet <|
-        List.foldl (\pc arr -> Array.set (modBy 12 pc) True arr)
-            (Array.repeat 12 False)
-            pcs

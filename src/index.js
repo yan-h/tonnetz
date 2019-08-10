@@ -16,33 +16,34 @@ var app = Elm.Main.init({
     node: document.getElementById('elm-app')
   });
 
+var maxVolume = 0.3
+
 var sound = new Howl({
   src: [require('./assets/0.wav')],
   loop: true,
-  volume: 0.5
+  volume: maxVolume
 });
 
 // AUDIO
 var sounds = [];
 
-for (var pc = 0; pc <= 11; pc++) {
+for (var tone = 0; tone <= 11; tone++) {
   sounds.push(
     new Howl({
-      src: [require(`./assets/${pc}.wav` )],
+      src: [require(`./assets/${tone}.wav` )],
       loop: true,
       volume: 0,
     })
   );
-  sounds[pc].play();
+  sounds[tone].play();
 }
 
-app.ports.audioControl.subscribe(function(data) {
-  var pc = data[0];
-  var audible = data[1];
-  console.log(sounds[pc].volume());
-  if (audible && sounds[pc].volume() == 0) {
-    sounds[pc].fade(0, 0.5, 20);
-  } else if (sounds[pc].volume() > 0) {
-    sounds[pc].fade(sounds[pc].volume(), 0, 20);
+app.ports.playTones.subscribe(function(tones) {
+  for (var tone = 0; tone < tones.length; tone++) {
+    if (sounds[tone].volume() > 0 && tones[tone] === false) {
+      sounds[tone].fade(sounds[tone].volume(), 0, 20);
+    } else if (sounds[tone].volume() === 0 && tones[tone] === true) {
+      sounds[tone].fade(0, maxVolume, 20);
+    }
   }
 });

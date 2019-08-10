@@ -34,7 +34,7 @@ module.exports = {
             options: {
               optimize: false,
               cwd: __dirname,
-              debug: true
+              debug: false
             },
           }
         ],

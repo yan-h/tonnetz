@@ -41,9 +41,9 @@ for (var tone = 0; tone <= 11; tone++) {
 app.ports.playTones.subscribe(function(tones) {
   for (var tone = 0; tone < tones.length; tone++) {
     if (sounds[tone].volume() > 0 && tones[tone] === false) {
-      sounds[tone].fade(sounds[tone].volume(), 0, 20);
+      sounds[tone].fade(sounds[tone].volume(), 0, 100);
     } else if (sounds[tone].volume() === 0 && tones[tone] === true) {
-      sounds[tone].fade(0, maxVolume, 20);
+      sounds[tone].fade(0, maxVolume, 100);
     }
   }
 });

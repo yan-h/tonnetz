@@ -144,21 +144,19 @@ viewCircle config =
         [ circle
             [ cx (px 32)
             , cy (px 32)
-            , r (px 24)
+            , r (px 22)
             , stroke << convert <| Tone.darkerColor config.tone
             , fill backFill
             , onClick config.onClick
             , onMouseOver config.onMouseOver
             , onMouseOut config.onMouseOut
-            , strokeWidth
-                << px
-              <|
-                case ( toneSelected, previewSelected ) of
-                    ( _, True ) ->
-                        5
+            , strokeOpacity <|
+                if previewSelected then
+                    Opacity 1
 
-                    _ ->
-                        0
+                else
+                    Opacity 0
+            , strokeWidth (px 4)
             , strokeLinecap StrokeLinecapRound
             ]
             []
@@ -220,15 +218,13 @@ viewSlice config =
         [ polygon
             [ points [ ( 0, 0 ), ( -pointX, pointY ), ( pointX, pointY ) ]
             , stroke << convert <| Tone.darkerColor config.tone
-            , strokeWidth
-                << px
-              <|
-                case ( toneSelected, previewSelected ) of
-                    ( _, True ) ->
-                        5
+            , strokeOpacity <|
+                if previewSelected then
+                    Opacity 1
 
-                    _ ->
-                        0
+                else
+                    Opacity 0
+            , strokeWidth (px 4)
             , strokeLinejoin StrokeLinejoinRound
             , fill backFill
             , transform [ Rotate config.rotation 0 0 ]

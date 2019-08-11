@@ -123,6 +123,19 @@ viewCircle config =
 
         previewSelected =
             ToneSet.member config.tone config.previewTones
+
+        ( frontColor, backColor ) =
+            if toneSelected then
+                ( Tone.hslColor, Tone.darkColor )
+
+            else
+                ( Tone.darkColor, Tone.hslColor )
+
+        frontFill =
+            Fill << convert << frontColor <| config.tone
+
+        backFill =
+            Fill << convert << backColor <| config.tone
     in
     svg
         [ x << px << toFloat <| Tuple.first config.position * 64
@@ -131,9 +144,9 @@ viewCircle config =
         [ circle
             [ cx (px 32)
             , cy (px 32)
-            , r (px 20)
-            , stroke << convert <| Tone.darkColor config.tone
-            , fill << Fill << convert <| Tone.hslColor config.tone
+            , r (px 24)
+            , stroke << convert <| Tone.darkerColor config.tone
+            , fill backFill
             , onClick config.onClick
             , onMouseOver config.onMouseOver
             , onMouseOut config.onMouseOut
@@ -141,37 +154,24 @@ viewCircle config =
                 << px
               <|
                 case ( toneSelected, previewSelected ) of
-                    ( True, False ) ->
-                        3
-
-                    ( False, False ) ->
-                        0
-
-                    _ ->
+                    ( _, True ) ->
                         5
-            , strokeDasharray <|
-                case ( toneSelected, previewSelected ) of
-                    ( False, True ) ->
-                        "6, 6"
-
-                    ( True, False ) ->
-                        "4, 10"
 
                     _ ->
-                        ""
+                        0
             , strokeLinecap StrokeLinecapRound
             ]
             []
         , text_
-            [ x (px 31.5)
-            , y (px 32.5)
+            [ x (px 32)
+            , y (px 33)
             , class [ "text-style" ]
             , textAnchor AnchorMiddle
             , dominantBaseline DominantBaselineMiddle
-            , fill << Fill << convert <| Tone.darkColor config.tone
+            , fill frontFill
             , pointerEvents "none"
             ]
-            [ text <| Tone.name config.tone ]
+            [ text <| Tone.letterName config.tone ]
         ]
 
 
@@ -195,6 +195,19 @@ viewSlice config =
 
         previewSelected =
             ToneSet.member config.tone config.previewTones
+
+        ( frontColor, backColor ) =
+            if toneSelected then
+                ( Tone.hslColor, Tone.darkColor )
+
+            else
+                ( Tone.darkColor, Tone.hslColor )
+
+        frontFill =
+            Fill << convert << frontColor <| config.tone
+
+        backFill =
+            Fill << convert << backColor <| config.tone
     in
     svg
         [ width (px 300)
@@ -206,52 +219,36 @@ viewSlice config =
         ]
         [ polygon
             [ points [ ( 0, 0 ), ( -pointX, pointY ), ( pointX, pointY ) ]
-            , stroke
-                << convert
-              <|
-                Tone.darkColor config.tone
+            , stroke << convert <| Tone.darkerColor config.tone
             , strokeWidth
                 << px
               <|
                 case ( toneSelected, previewSelected ) of
-                    ( True, False ) ->
-                        3
-
-                    ( False, False ) ->
-                        0
-
-                    _ ->
+                    ( _, True ) ->
                         5
-            , strokeDasharray <|
-                case ( toneSelected, previewSelected ) of
-                    ( False, True ) ->
-                        "12, 6"
-
-                    ( True, False ) ->
-                        "8, 24"
 
                     _ ->
-                        ""
+                        0
             , strokeLinejoin StrokeLinejoinRound
-            , fill << Fill << convert <| Tone.hslColor config.tone
+            , fill backFill
             , transform [ Rotate config.rotation 0 0 ]
             , class [ "outlined" ]
             , strokeLinecap StrokeLinecapRound
             ]
             []
-        , rotatedText config 110 (Tone.letterName config.tone)
-        , rotatedText config 80 (Tone.name config.tone)
+        , rotatedText config 110 (Tone.letterName config.tone) frontFill
+        , rotatedText config 80 (Tone.name config.tone) frontFill
         ]
 
 
-rotatedText : SliceConfig msg -> Float -> String -> Html msg
-rotatedText config distance str =
+rotatedText : SliceConfig msg -> Float -> String -> Fill -> Html msg
+rotatedText config distance str frontFill =
     text_
         [ x (px (distance * cos (degrees (config.rotation - 90))))
         , y (px (distance * sin (degrees (config.rotation - 90))))
         , class [ "text-style" ]
         , textAnchor AnchorMiddle
         , dominantBaseline DominantBaselineMiddle
-        , fill << Fill << convert <| Tone.darkColor config.tone
+        , fill frontFill
         ]
         [ text <| str ]

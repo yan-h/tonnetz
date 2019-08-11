@@ -21,6 +21,28 @@ type ToneSet
     = ToneSet (Array Bool)
 
 
+type Root
+    = RootTone Tone
+    | RootNone
+
+
+size : ToneSet -> Int
+size (ToneSet arr) =
+    Array.foldl
+        (\bool count ->
+            count
+                + (case bool of
+                    True ->
+                        1
+
+                    False ->
+                        0
+                  )
+        )
+        0
+        arr
+
+
 equals : ToneSet -> ToneSet -> Bool
 equals (ToneSet s1) (ToneSet s2) =
     s1 == s2

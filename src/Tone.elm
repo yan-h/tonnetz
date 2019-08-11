@@ -2,6 +2,7 @@ module Tone exposing
     ( Tone(..)
     , add
     , darkColor
+    , darkerColor
     , hslColor
     , int
     , letterName
@@ -66,16 +67,21 @@ reify rgb =
     Color.rgb rgb.r rgb.g rgb.b
 
 
+darkerColor : Tone -> HSLColor
+darkerColor =
+    HSLColor.modifyLuminance (\x -> x * 0.25) << hslColor
+
+
 darkColor : Tone -> HSLColor
 darkColor =
-    HSLColor.modifyLuminance (\x -> x * 0.3) << hslColor
+    HSLColor.modifyLuminance (\x -> x * 0.55) << hslColor
 
 
 hslColor : Tone -> HSLColor
 hslColor (Tone i) =
     let
         f h =
-            HSLColor h 0.6 0.75
+            HSLColor h 0.55 0.8
     in
     f <|
         case i of
